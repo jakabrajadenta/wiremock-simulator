@@ -1,0 +1,10 @@
+{
+  "request": {
+    "urlPathTemplate": "/mappings/other",
+    "method": "GET"
+  },
+  "response": {
+    "status": 200,
+    "body": "Sample Mapping Other File"
+  }
+}
