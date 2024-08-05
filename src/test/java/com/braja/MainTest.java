@@ -22,9 +22,20 @@ public class MainTest {
 
     @Before
     public void configureStubs() {
-        // configureFor("localhost", 8080);
+
+        stubFor(get(urlEqualTo("/test/bodyFile"))
+                .willReturn(aResponse().withBodyFile("output.json")));
+
+        stubFor(get(urlMatching("/test/.*")).atPriority(10)
+                .willReturn(aResponse().withStatus(401)));
+
         stubFor(get(urlEqualTo("/test/abc"))
-                .willReturn(aResponse().withBody("Test success!")));
+                .willReturn(aResponse()
+                        .withHeader("x-trace-id","abc")
+                        .withHeader("x-token","def")
+                        .withHeader("x-token","ghi")
+                        .withHeader("x-array", "jkl", "mno")
+                        .withBody("Test success!")));
 
         stubFor(delete("/test/delete").willReturn(okJson("Deleted!")));
 
@@ -40,6 +51,36 @@ public class MainTest {
     }
 
     @Test
+    public void exampleTestBodyFile() throws IOException {
+
+        Request request = new Request.Builder()
+                .url("http://localhost:8080/test/bodyFile")
+                .get()
+                .build();
+
+        Response response = client.newCall(request).execute();
+        assertNotNull(response);
+        assertNotNull(response.body());
+        System.out.println("resp body : " + response.body().string());
+    }
+    @Test
+    public void exampleTest401() throws IOException {
+
+        Request request = new Request.Builder()
+                .url("http://localhost:8080/test/abcde")
+                .get()
+                .build();
+
+        Response response = client.newCall(request).execute();
+        assertNotNull(response);
+
+        int status = response.code();
+        System.out.println(status);
+
+        assertEquals(401, status);
+    }
+
+    @Test
     public void exampleTestAbc() throws IOException {
 
         Request request = new Request.Builder()
@@ -48,12 +89,20 @@ public class MainTest {
                 .build();
 
         Response response = client.newCall(request).execute();
-        String responseBody = response.body().string();
-        System.out.println(responseBody);
-
         assertNotNull(response);
+        assertNotNull(response.body());
+
+        String responseBody = response.body().string();
+        String responseHeader = response.header("x-trace-id");
+        System.out.println("resp body : " + responseBody);
+        System.out.println("resp header : " + responseHeader);
+        System.out.println("resp header : " + response.header("x-token"));
+        System.out.println("resp header : " + response.headers("x-token"));
+        System.out.println("resp header : " + response.header("x-array"));
+        System.out.println("resp header : " + response.headers("x-array"));
+
         assertEquals("Test success!", responseBody);
-        // verify(exactly(1), getRequestedFor(urlEqualTo("/test/abc")));
+        assertEquals("abc", responseHeader);
     }
 
     @Test
@@ -65,12 +114,13 @@ public class MainTest {
                 .build();
 
         Response response = client.newCall(request).execute();
+        assertNotNull(response);
+        assertNotNull(response.body());
+
         String responseBody = response.body().string();
         System.out.println(responseBody);
 
-        assertNotNull(response);
         assertEquals("Deleted!", responseBody);
-        // verify(exactly(1), getRequestedFor(urlEqualTo("/test/abc")));
     }
 
     @Test
@@ -85,13 +135,14 @@ public class MainTest {
                 .build();
 
         Response response = client.newCall(request).execute();
+        assertNotNull(response);
+        assertNotNull(response.body());
+        assertEquals(200, response.code());
+
         String responseBody = response.body().string();
         System.out.println(responseBody);
 
-        assertEquals(200, response.code());
-        assertNotNull(response);
         assertEquals("Posted!", responseBody);
-        // verify(exactly(1), getRequestedFor(urlEqualTo("/test/abc")));
     }
 
     @Test
@@ -105,10 +156,11 @@ public class MainTest {
                 .build();
 
         Response response = client.newCall(request).execute();
+        assertNotNull(response);
+
         System.out.println(response.code());
 
         assertEquals(401, response.code());
-        // verify(exactly(1), getRequestedFor(urlEqualTo("/test/abc")));
     }
 
     @Test
@@ -120,6 +172,9 @@ public class MainTest {
                 .build();
 
         Response response = client.newCall(request).execute();
+        assertNotNull(response);
+        assertNotNull(response.body());
+
         String responseBody = response.body().string();
         System.out.println(responseBody);
 
